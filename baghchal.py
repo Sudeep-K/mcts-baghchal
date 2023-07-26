@@ -1,0 +1,179 @@
+from copy import deepcopy
+
+class Board():
+    # create constructor (init board class instance)
+    def __init__(self, board=None):
+        # define players
+        self.player_tiger = 0
+        self.player_goat = 1
+        self.empty_space = None
+        self.player_turn = self.player_goat
+
+        # define board position i.e. state of board
+        self.position = [
+                            [None, None, None, None, None],
+                            [None, None, None, None, None],
+                            [None, None, None, None, None],
+                            [None, None, None, None, None],
+                            [None, None, None, None, None]
+                        ]
+
+        # init (reset board)
+        self.init_board()
+
+        # track the number of trapped tigers
+        self.tigers = {
+            'trapped': 0
+        }
+
+        # stats for goat player
+        self.goats = {
+            # initially 20 goats are on hand
+            'onHand': 0,
+            # initially 0 goats are killed
+            'killed': 0
+        }
+
+        # position of piece selected by player (inorder to find the next valid move for the player)
+        # [-1, -1] signifies goats are still on hand and placing is on board of goat is left
+        # self.selected_position = [-1, -1]
+        self.selected_position = [0, 4]
+
+        # for the selected piece, store the valid moves
+        self.valid_moves = []
+
+        # create a copy of previous board state if available
+        if board is not None:
+            self.__dict__ = deepcopy(board.__dict__)
+
+    # init (reset board)
+    def init_board(self):
+        # loop over board rows
+        for row in range(5):
+            # loop over board columns
+            for col in range(5):
+                # set board position
+                if (row == 0 and col == 0) or (row == 0 and col == 4) or (row == 4 and col == 0) or (row == 4 and col == 4):
+                    self.position[row][col] = self.player_tiger
+                else:
+                    self.position[row][col] = self.empty_space
+    
+    def make_move(self, row, col):
+        # create a new board instance
+        board = Board(self)
+
+        # make move for player goat if on hand goat is left
+        if (self.player_turn == self.player_goat) and (self.goats["onHand"] > 0):
+            board.position[row][col] = self.player_goat
+        elif (self.player_turn == self.player_goat) and (self.goats["onHand"] <=0 ):
+            board.position[row][col] = self.player_goat
+            board.position[self.selected_position[0]][self.selected_position[1]] = self.empty_space
+        else:
+            board.position[row][col] = self.player_tiger
+            board.position[self.selected_position[0]][self.selected_position[1]] = self.empty_space
+        
+        # change the player turn
+        self.player_turn = self.player_goat if self.player_turn == self.player_tiger else self.player_tiger
+
+        return board
+    
+    # check for the position to be diagonal
+    def check_diagonal(self, coordinate):
+        if ((coordinate[0] + coordinate[1]) % 2) == 0:
+            return True
+        else:
+            return False
+
+    # check for valid positions for selected move and player
+    def valid_strategies(self):
+
+        directions = [
+            { "row": -1, "col": 0 }, # up
+            { "row": 1, "col": 0 }, # down
+            { "row": 0, "col": -1 }, # left
+            { "row": 0, "col": 1 }, # right
+        ]
+
+        directionsWithDiagonal = [
+            { "row": -1, "col": 0 }, # up
+            { "row": 1, "col": 0 }, # down
+            { "row": 0, "col": -1 }, # left
+            { "row": 0, "col": 1 }, # right
+            { "row": -1, "col": -1 }, # top-left
+            { "row": -1, "col": 1 }, # top-right
+            { "row": 1, "col": -1 }, # bottom-left
+            { "row": 1, "col": 1 }, # bottom-right
+        ]
+
+        # check if it's goat's turn and there are goats remained to be placed on board
+        if (self.player_turn == self.player_goat) and (self.goats["onHand"] > 0):
+            #  iterate over each row and column of the board
+            for row in range(5):
+                for col in range(5):
+                    # check if the cell is empty(None) and add it as a valid move
+                    if self.position[row][col] == self.empty_space:
+
+                        self.valid_moves.append(self.make_move(row, col))
+
+        # check valid moves for goat to reposition the goat after all goats are placed on board
+        elif (self.player_turn == self.player_goat) and (self.goats["onHand"] <= 0) and (self.position[self.selected_position[0]][self.selected_position[1]] == self.player_goat):
+            row = self.selected_position[0]
+            col = self.selected_position[1]
+
+            if self.check_diagonal(self.selected_position):
+                # coordinates falling in diagonal has more valid moves
+                directionChoice = directionsWithDiagonal
+            else:
+                directionChoice = directions
+
+            for direction in directionChoice:
+                newRow = row + direction["row"]
+                newCol = col + direction["col"]
+
+                # check if the position is within the bounds of the board
+                if newRow >= 0 and newRow <= 4 and newCol >= 0 and newCol <= 4:
+                    # check if the position is empty
+                    if self.position[newRow][newCol] == self.empty_space:
+                        self.valid_moves.append(self.make_move(row, col))
+
+        # check valid moves for tiger
+        else:
+            row = self.selected_position[0]
+            col = self.selected_position[1]
+
+            if self.check_diagonal(self.selected_position):
+                # coordinates falling in diagonal has more valid moves
+                directionChoice = directionsWithDiagonal
+            else:
+                directionChoice = directions
+
+            for direction in directionChoice:
+                newRow = row + direction["row"]
+                newCol = col + direction["col"]
+
+                # check one more step in the straight line for kill action
+                newKillRow = newRow + direction["row"]
+                newKillCol = newCol + direction["col"]
+
+                # check if the position is within the bounds of the board
+                if newRow >= 0 and newRow <= 4 and newCol >= 0 and newCol <= 4:
+                    # check if the new position is empty
+                    if self.position[newRow][newCol] == self.empty_space:
+                        self.valid_moves.append(self.make_move(row, col))
+                    elif self.position[newRow][newCol] == self.player_goat:
+                        if newKillRow >= 0 and newKillRow <= 4 and newKillCol >= 0 and newKillCol <= 4:
+                            if self.position[newKillRow][newKillCol] == None:
+                                self.valid_moves.append(self.make_move(newKillRow, newKillCol))
+
+    # make move function here
+
+    # make game over function here
+
+# main driver
+if __name__ == '__main__':
+    # create board instance
+    board = Board()
+
+    # board.valid_strategies()
+    # print(board.__dict__)
+    # print(board.valid_moves)
