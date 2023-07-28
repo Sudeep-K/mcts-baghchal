@@ -40,12 +40,14 @@ class MCTS():
         self.root = TreeNode(initial_state, None)
 
         # walk through 1000 iterations
-        for iteration in range(1000):
+        for iteration in range(2):
             # select a node (selection phase)
             node = self.select(self.root)
+            print(node.board.__dict__, "node")
 
             # score current node (simulation phase)
             score = self.rollout(node.board)
+            # print(score, "score")
 
             # backpropagate results
             self.backpropagate(node, score)
@@ -76,9 +78,10 @@ class MCTS():
     def expand(self, node):
         # generate legal moves for the given node
         if node.board.player_turn == node.board.player_goat and node.board.goats["onHand"] > 0:
-            node.bord.valid_moves = []
+            node.board.valid_moves = []
             node.board.valid_strategies()
             states = node.board.valid_moves
+
             for state in states:
                 # make sure that current state (move) is not present in child nodes
                 if str(state.position) not in node.children:
@@ -86,7 +89,7 @@ class MCTS():
                     new_node = TreeNode(state, node)
 
                     # add child node to the parent's node children list (dict)
-                    node.children[str[state.position]] = new_node
+                    node.children[str(state.position)] = new_node
 
                     # case when node is fully expanded
                     if len(states) == len(node.children):
@@ -124,15 +127,18 @@ class MCTS():
             # case when node is fully expanded
             node.is_fully_expanded = True
 
-
     # rollout (simulate) the game from the current position via making random moves until the game is finished
     def rollout(self, board):
         # make random moves for both sides until terminal state of the game is reached
         while not board.is_gameover():
             # try to make a move
             try:
-                # make the on board
-                board = random.choice(board.generate_states())
+                # choose random piece to make move
+                random_position = random.choice(board.get_player_position(board, board.player_turn))
+                board.selected_position = random_position
+                board.valid_moves = []
+                board.valid_strategies()
+                board = random.choice(board.valid_moves)
                 
             # no moves available
             except:
