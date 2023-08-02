@@ -1,12 +1,13 @@
 import math
 import random
+from baghchal import Board
 
 # tree class definition
 class TreeNode():
     # class constructor (create tree node structure)
     def __init__(self, board, parent=None):
         # init associated board state
-        self.board = board
+        self.board = Board(board)
 
         # is node terminal flag
         if self.board.is_gameover():
@@ -77,7 +78,8 @@ class MCTS():
     # expand the node
     def expand(self, node):
         # generate legal moves for the given node
-        if node.board.player_turn == node.board.player_goat and node.board.goats["onHand"] > 0:
+        print("\n\n\n\nI am currently expanding")
+        if (node.board.player_turn == node.board.player_goat) and (node.board.goats["onHand"] > 0):
             node.board.valid_moves = []
             node.board.valid_strategies()
             states = node.board.valid_moves
@@ -119,7 +121,7 @@ class MCTS():
                             new_node = TreeNode(state, node)
 
                             # add child node to the parent's node children list (dict)
-                            node.children[str[state.position]] = new_node
+                            node.children[str(state.position)] = new_node
 
                             # return newly created node
                             return new_node
@@ -129,22 +131,29 @@ class MCTS():
 
     # rollout (simulate) the game from the current position via making random moves until the game is finished
     def rollout(self, board):
+        print("\n\n\n\t\t\t\tI am rolling out")
         # make random moves for both sides until terminal state of the game is reached
         while not board.is_gameover():
-            # try to make a move
-            try:
-                # choose random piece to make move
+            # choose random piece to make move
+            print("\t\t\t\tThis is the board")
+            for row in board.position:
+                print("\t\t\t\t", row)
+            print("\t\t\t\tThis is current player turn", board.player_turn)
+            if (board.player_turn == board.player_goat) and (board.goats["onHand"] > 0):
+                print("no need to select a position")
+            else:
+                # i need to check for the players and on selected position to have valid moves
                 random_position = random.choice(board.get_player_position(board, board.player_turn))
                 board.selected_position = random_position
-                board.valid_moves = []
-                board.valid_strategies()
-                board = random.choice(board.valid_moves)
-                
-            # no moves available
-            except:
-                # return a draw score
-                return 0
-        
+                print("\t\t\t\tThis is the randomly selected position to play", random_position)
+            board.valid_moves = []
+            board.valid_strategies()
+            board = random.choice(board.valid_moves)
+            print("\t\t\t\tThis is the board after making a move")
+            for row in board.position:
+                print("\t\t\t\t", row)
+            print("\t\t\t\tThis is the state of game whether it is gameover or not", board.is_gameover())
+        print("\t\t\t\tGame over state after roll out", board.is_gameover())
         # return score from the player goat perspective
         if board.player_turn == board.player_goat: return 1
         if board.player_turn == board.player_tiger: return -1

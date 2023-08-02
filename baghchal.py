@@ -70,27 +70,28 @@ class Board():
     def make_move(self, row, col, kill=False,killrow=None, killcol=None):
         # create a new board instance
         board = Board(self)
+        board.valid_moves = []
 
         # make move for player goat if on hand goat is left
-        if (self.player_turn == self.player_goat) and (self.goats["onHand"] > 0):
-            board.position[row][col] = self.player_goat
+        if (board.player_turn == board.player_goat) and (board.goats["onHand"] > 0):
+            board.position[row][col] = board.player_goat
             board.goats["onHand"] -= 1
-        elif (self.player_turn == self.player_goat) and (self.goats["onHand"] <=0 ):
-            board.position[row][col] = self.player_goat
-            board.position[self.selected_position[0]][self.selected_position[1]] = self.empty_space
+        elif (board.player_turn == board.player_goat) and (board.goats["onHand"] <=0 ):
+            board.position[row][col] = board.player_goat
+            board.position[board.selected_position[0]][board.selected_position[1]] = board.empty_space
             board.goats["killed"] += 1
         elif kill:
-            board.position[row][col] = self.player_tiger
-            board.position[self.selected_position[0]][self.selected_position[1]] = self.empty_space
-            board.position[killrow][killcol] = self.empty_space
+            board.position[row][col] = board.player_tiger
+            board.position[board.selected_position[0]][board.selected_position[1]] = board.empty_space
+            board.position[killrow][killcol] = board.empty_space
             board.goats["killed"] += 1
         else:
-            board.position[row][col] = self.player_tiger
-            board.position[self.selected_position[0]][self.selected_position[1]] = self.empty_space
+            board.position[row][col] = board.player_tiger
+            board.position[board.selected_position[0]][board.selected_position[1]] = board.empty_space
         
         # change the player turn
-        self.player_turn = self.player_goat if self.player_turn == self.player_tiger else self.player_tiger
-
+        board.player_turn = board.player_goat if board.player_turn == board.player_tiger else board.player_tiger
+        # print("This is what the board and moves look like: position and valid moves", board.position, board.valid_moves)
         return board
     
     # check for the position to be diagonal
@@ -128,7 +129,9 @@ class Board():
                 for col in range(5):
                     # check if the cell is empty(None) and add it as a valid move
                     if self.position[row][col] == self.empty_space:
+                        print("appending valid moves @ " + str(row) + "row " + str(col) + "col")
                         self.valid_moves.append(self.make_move(row, col))
+            return 0;
 
         # check valid moves for goat to reposition the goat after all goats are placed on board
         elif (self.player_turn == self.player_goat) and (self.goats["onHand"] <= 0) and (self.position[self.selected_position[0]][self.selected_position[1]] == self.player_goat):
@@ -150,6 +153,7 @@ class Board():
                     # check if the position is empty
                     if self.position[newRow][newCol] == self.empty_space:
                         self.valid_moves.append(self.make_move(row, col))
+            return 0;
 
         # check valid moves for tiger
         else:
@@ -174,11 +178,12 @@ class Board():
                 if newRow >= 0 and newRow <= 4 and newCol >= 0 and newCol <= 4:
                     # check if the new position is empty
                     if self.position[newRow][newCol] == self.empty_space:
-                        self.valid_moves.append(self.make_move(row, col))
+                        self.valid_moves.append(self.make_move(newRow, newCol))
                     elif self.position[newRow][newCol] == self.player_goat:
                         if newKillRow >= 0 and newKillRow <= 4 and newKillCol >= 0 and newKillCol <= 4:
                             if self.position[newKillRow][newKillCol] == None:
                                 self.valid_moves.append(self.make_move(newKillRow, newKillCol, True, newRow, newCol))
+            return 0;
     
     # helper function to count trapped tigers
     def get_trapped_tigers(self):
@@ -188,11 +193,12 @@ class Board():
         # get the positions of tigers
         tigers = self.get_player_position(self, self.player_tiger)
 
+        # temporarily change the player turn
+        temp_player_turn = self.player_turn
+        self.player_turn = self.player_tiger
+
         # check if the tiger is trapped
         for tiger in tigers:
-            # temporarily change the player turn
-            temp_player_turn = self.player_turn
-            self.player_turn = self.player_tiger
             
             self.selected_position = tiger
             self.valid_moves = []
@@ -200,6 +206,7 @@ class Board():
             
             if len(self.valid_moves) == 0:
                 self.tigers["trapped"].append(tiger)
+
         self.player_turn = temp_player_turn
 
     # make game over function here
@@ -293,6 +300,6 @@ if __name__ == '__main__':
     board = best_move.board
 
     # print the board
-    print(board)
+    print(board, "this might be the best move babe")
 
     input()
