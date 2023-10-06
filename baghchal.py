@@ -79,7 +79,7 @@ class Board():
         elif (board.player_turn == board.player_goat) and (board.goats["onHand"] <=0 ):
             board.position[row][col] = board.player_goat
             board.position[board.selected_position[0]][board.selected_position[1]] = board.empty_space
-            board.goats["killed"] += 1
+            # board.goats["killed"] += 1
         elif kill:
             board.position[row][col] = board.player_tiger
             board.position[board.selected_position[0]][board.selected_position[1]] = board.empty_space
@@ -129,7 +129,7 @@ class Board():
                 for col in range(5):
                     # check if the cell is empty(None) and add it as a valid move
                     if self.position[row][col] == self.empty_space:
-                        print("appending valid moves @ " + str(row) + "row " + str(col) + "col")
+                        # print("appending valid moves @ " + str(row) + "row " + str(col) + "col")
                         self.valid_moves.append(self.make_move(row, col))
             return 0;
 
@@ -292,14 +292,16 @@ if __name__ == '__main__':
     # print(mcts.select(root))
 
     # loop to play AI vs AI
-    # while True:
-    # find the best move
-    best_move = mcts.search(board)
+    while True:
+        print("Player to move: ", board.player_turn)
 
-    # make the best move
-    board = best_move.board
+        # find the best move
+        best_move = mcts.search(board)
 
-    # print the board
-    print(board, "this might be the best move babe")
+        # make the best move
+        board = best_move.board
 
-    input()
+        # print the board
+        print(board.position, "this might be the best move babe")
+
+        input()
