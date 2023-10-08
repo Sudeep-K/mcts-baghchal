@@ -79,7 +79,6 @@ class Board():
         elif (board.player_turn == board.player_goat) and (board.goats["onHand"] <=0 ):
             board.position[row][col] = board.player_goat
             board.position[board.selected_position[0]][board.selected_position[1]] = board.empty_space
-            # board.goats["killed"] += 1
         elif kill:
             board.position[row][col] = board.player_tiger
             board.position[board.selected_position[0]][board.selected_position[1]] = board.empty_space
@@ -91,7 +90,6 @@ class Board():
         
         # change the player turn
         board.player_turn = board.player_goat if board.player_turn == board.player_tiger else board.player_tiger
-        # print("This is what the board and moves look like: position and valid moves", board.position, board.valid_moves)
         return board
     
     # check for the position to be diagonal
@@ -152,7 +150,7 @@ class Board():
                 if newRow >= 0 and newRow <= 4 and newCol >= 0 and newCol <= 4:
                     # check if the position is empty
                     if self.position[newRow][newCol] == self.empty_space:
-                        self.valid_moves.append(self.make_move(row, col))
+                        self.valid_moves.append(self.make_move(newRow, newCol))
             return 0;
 
         # check valid moves for tiger
@@ -288,12 +286,10 @@ if __name__ == '__main__':
 
     # create mcts instance
     mcts = MCTS()
-    # root = TreeNode(board)
-    # print(mcts.select(root))
 
     # loop to play AI vs AI
     while True:
-        print("Player to move: ", board.player_turn)
+        print("\nPlayer to move: ", board.player_turn)
 
         # find the best move
         best_move = mcts.search(board)
@@ -302,6 +298,11 @@ if __name__ == '__main__':
         board = best_move.board
 
         # print the board
-        print(board.position, "this might be the best move babe")
+        print("Board state, tiger trapped: ", board.tigers["trapped"])
+        print("Board state, goats killed: ", board.goats["killed"])
+        print("Board state, goats onhand: ", board.goats["onHand"])
+        print("Board state: \n\n")
+        for row in board.position:
+            print(row)
 
-        input()
+        # input()

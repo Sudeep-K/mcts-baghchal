@@ -42,15 +42,16 @@ class MCTS():
         self.root = TreeNode(initial_state, None)
 
         # walk through 1000 iterations
-        for iteration in range(50):
+        for iteration in range(10):
             # select a node (selection phase)
-            print("Current iteration", iteration)
             node = self.select(self.root)
-            # print("\n\n\n\nnode is it correct dude i just want the board man fuck this shit", node.board.__dict__)
 
-            # score current node (simulation phase)
-            score = self.rollout(node.board)
-            # print(score, "score")
+            try:
+                # score current node (simulation phase)
+                score = self.rollout(node.board)            
+            except:
+                print(node, "this is the node")
+                score = 0
 
             # backpropagate results
             self.backpropagate(node, score)
@@ -68,8 +69,6 @@ class MCTS():
             # case where node is fully expanded
             if node.is_fully_expanded:
                 node = self.get_best_move(node, 2)
-                print("after fully expanded", node.__dict__)
-                print("Is the node terminal", node.is_terminal)
 
             # case where node is not fully expanded
             else:
@@ -77,15 +76,11 @@ class MCTS():
                 return self.expand(node)
             
         # return terminal node
-        print("Have we ever reached here?")
         return node
     
     # expand the node
     def expand(self, node):
         # generate legal moves for the given node
-        print("\n\n\n\nI am currently expanding")
-        # print("\nThis is the current player while expanding", node.board.player_turn)
-        # print("\nThis is the current board while expanding", node.board.position)
 
         if (node.board.player_turn == node.board.player_goat) and (node.board.goats["onHand"] > 0):
             node.board.valid_moves = []
@@ -101,12 +96,8 @@ class MCTS():
                     # add child node to the parent's node children list (dict)
                     node.children[str(state.position)] = new_node
 
-                    print("length of states for goats", len(states))
-                    print("length of children for goats", len(node.children))
-
                     # case when node is fully expanded
                     if len(states) == len(node.children):
-                        print("I have fully expanded for goat when on hand")
                         node.is_fully_expanded = True
 
                     # return newly created node
@@ -127,52 +118,38 @@ class MCTS():
                         states = node.board.valid_moves
 
                     else:
-                        break
+                        continue
                     
-                    # print("\n\n\n\nNow printing while on exxpanding phase for the tiger or goat to be changed position while selecting")
                     # for state in states:
-                        # print("\nThis is the player being expanded", state.player_turn)
-                        # print("\nThis is the state of the board while expanding", state.position)
+                    #     print("\nstate being printed")
+                    #     print("is the state in the children? ", str(state.position) in node.children)
+                    #     if str(state.position) not in node.children:
+                    #         for row in state.position:
+                    #             print(row)
+                    if len(states) != 0:
+                        for state in states:
+                            # make sure that current state (move) is not present in child nodes
+                            if str(state.position) not in node.children:
+                                # create a new node
+                                new_node = TreeNode(state, node)
 
-                    for state in states:
-                        # make sure that current state (move) is not present in child nodes
-                        if str(state.position) not in node.children:
-                            # create a new node
-                            new_node = TreeNode(state, node)
+                                # add child node to the parent's node children list (dict)
+                                node.children[str(state.position)] = new_node
 
-                            # add child node to the parent's node children list (dict)
-                            node.children[str(state.position)] = new_node
+                                # case when node is fully expanded
+                                if len(states) == len(node.children):
+                                    node.is_fully_expanded = True
 
-                            print("length of states for tigers or goats", len(states))
-                            print("length of children for tigers or goats", len(node.children))
-                            print("print the board dude", node.board.__dict__)
-                            print
-
-                            # case when node is fully expanded
-                            if len(states) == len(node.children):
-                                print("do i reach here anyday?")
-                                node.is_fully_expanded = True
-
-                            # return newly created node
-                            return new_node
+                                # return newly created node
+                                return new_node
 
     # rollout (simulate) the game from the current position via making random moves until the game is finished
     def rollout(self, board):
-        print("\n\n\n\t\t\t\tI am rolling out")
 
         # make random moves for both sides until terminal state of the game is reached
         while not board.is_gameover():
             # choose random piece to make move
-
-            # print("\t\t\t\tThis is the board in rolling state")
-            # for row in board.position:
-            #     print("\t\t\t\t", row)
-            # print("\t\t\t\tThis is current player turn", board.player_turn)
-
             if (board.player_turn == board.player_goat) and (board.goats["onHand"] > 0):
-
-                # print("no need to select a position")
-                
                 board.valid_moves = []
                 board.valid_strategies()
 
@@ -185,10 +162,6 @@ class MCTS():
                             copy_board = Board(board)
                             if copy_board.position[row][col] == copy_board.player_goat:
                                 copy_board.selected_position = [row, col]
-                                
-                                # print("player turn", copy_board.player_turn)
-                                # print("selected position", copy_board.selected_position)
-                                
                                 copy_board.valid_moves = []
                                 copy_board.valid_strategies()
                                 
@@ -202,47 +175,25 @@ class MCTS():
                             if copy_board.position[row][col] == copy_board.player_tiger:
                                 copy_board.selected_position = [row, col]
 
-                                # print("player turn", copy_board.player_turn)
-                                # print("selected position", copy_board.selected_position)
-
                                 copy_board.valid_moves = []
                                 copy_board.valid_strategies()
                                 
                                 if copy_board.valid_moves != []:
                                     valid_positions.append(copy_board.selected_position)
 
-                # print("\nPrint all the valid positions")
-                # for position in valid_positions:
-                #     print(position)
-
                 random_position = random.choice(valid_positions)
                 board.selected_position = random_position
-
-                # print("\t\t\t\tThis is the randomly selected position to play", random_position)
 
                 board.valid_moves = []
                 board.valid_strategies()
 
             board = random.choice(board.valid_moves)
 
-        #     print("\t\t\t\tThis is the board after making a move")
-        #     for row in board.position:
-        #         print("\t\t\t\t", row)
-        #     print("\t\t\t\tThis is the state of game whether it is gameover or not", board.is_gameover())
-        # print("\t\t\t\tGame over state after roll out", board.is_gameover())
-        # print("\t\t\t\tThis is the board after game over")
-        # for row in board.position:
-        #     print("\t\t\t\t", row)
-
-        # return score from the player goat perspective
-        # if board.player_turn == board.player_goat: return 1
-        # if board.player_turn == board.player_tiger: return -1
-        if board.is_gameover() == 1 : return -1
-        if board.is_gameover() == 2 : return 1
+        if board.is_gameover() == 1 : return -1 # goat wins
+        elif board.is_gameover() == 2 : return 1 # tiger wins
 
     # backpropagate the number of visits and score up to the root node
     def backpropagate(self, node, score):
-        print("\n\n\nI am backpropagating")
         # update nodes's up to root node
         while node is not None:
             # update node's visits
